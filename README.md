@@ -1,6 +1,6 @@
-# Vector Deck Themes — 15 тем презентаций Vector
+<p align="center"><img src="assets-vector-ray.png" width="130" alt="Vector Ray" /></p>
 
-<img src="assets-vector-ray.png" width="110" align="right" alt="Vector Ray" />
+# Vector Deck Themes — 15 тем презентаций Vector
 
 Тема-движок для дек экосистемы Vector (Osmosy). Один `engine.py` = 15 готовых
 дизайн-тем (7 тёмных, 8 светлых) + контент + билдер. Любая Vector-презентация
