@@ -305,13 +305,13 @@ def s_title(slide, th):
                  font=th['f_title'], color=th['accent'], align=PP_ALIGN.CENTER)
         add_text(slide, 3.17, 3.30, 7.0, 0.4, 'Навыки российского права для Hermes Agent',
                  size=17, font=th['f_body'], color=th['text'], align=PP_ALIGN.CENTER)
-        for i, (big, small) in enumerate([('12', 'плагинов'), ('167', 'навыков'), ('РФ', 'право')]):
+        for i, (big, small) in enumerate([('12', 'плагинов'), ('168', 'навыков'), ('РФ', 'право')]):
             chip(slide, th, 3.47 + i * 2.25, 4.12, 1.95, big, small)
         add_rect(slide, 4.87, 5.62, 3.6, 0.52, fill=th['accent'], radius=0.26)
         add_text(slide, 4.87, 5.74, 3.6, 0.3, 'github.com/Osmosy/vector-legal', size=12.5,
                  bold=True, font=th['f_mono'],
                  color='FFFFFF' if th['mode'] == 'dark' else 'FFFFFF', align=PP_ALIGN.CENTER)
-        add_text(slide, 3.67, 6.55, 6.0, 0.28, 'Адаптация из anthropics/claude-for-legal · Apache-2.0',
+        add_text(slide, 3.67, 6.55, 6.0, 0.28, 'Адаптация anthropics/claude-for-legal (Apache-2.0) · код — MIT',
                  size=10.5, font=th['f_body'], color=th['muted'], align=PP_ALIGN.CENTER)
         add_text(slide, 4.87, 6.90, 3.6, 0.26, 'Osmosy · Hermes Agent · 2026', size=9.5,
                  font=th['f_mono'], color=th['muted'], align=PP_ALIGN.CENTER)
@@ -324,7 +324,7 @@ def s_title(slide, th):
                  font=th['f_title'], color=th['accent'])
         add_text(slide, 0.92, 2.86, 5.9, 0.7, 'Навыки российского права для Hermes Agent',
                  size=16.5, font=th['f_body'], color=th['text'])
-        for i, (big, small) in enumerate([('12', 'плагинов'), ('167', 'навыков'), ('РФ', 'право')]):
+        for i, (big, small) in enumerate([('12', 'плагинов'), ('168', 'навыков'), ('РФ', 'право')]):
             x = 0.92 + i * 1.95
             add_text(slide, x, 3.85, 1.8, 0.5, big, size=26, bold=True,
                      font=th['f_title'], color=th['accent'])
@@ -332,7 +332,7 @@ def s_title(slide, th):
                      color=th['muted'], spacing=100)
         add_text(slide, 0.92, 5.15, 6.0, 0.3, 'github.com/Osmosy/vector-legal', size=13,
                  bold=True, font=th['f_mono'], color=th['accent'])
-        add_text(slide, 0.92, 5.55, 6.0, 0.28, 'Адаптация из anthropics/claude-for-legal · Apache-2.0',
+        add_text(slide, 0.92, 5.55, 6.0, 0.28, 'Адаптация anthropics/claude-for-legal (Apache-2.0) · код — MIT',
                  size=10.5, font=th['f_body'], color=th['muted'])
         add_text(slide, 0.92, 5.90, 6.0, 0.26, 'Osmosy · Hermes Agent · 2026', size=9.5,
                  font=th['f_mono'], color=th['muted'])
@@ -355,7 +355,7 @@ def s_intro(slide, th):
         card(slide, th, 0.62 + i * 4.11, 3.16, 3.75, 1.55, h, l)
     wide_panel(slide, th, 0.62, 5.02, 12.1, 1.85, 'Из чего выросло', [
         'Основа: anthropics/claude-for-legal (Anthropic, Apache-2.0) — 151 навык в 12 плагинах',
-        'Адаптация (Osmosy, Apache-2.0) — русское право + Hermes Agent + расширения:',
+        'Адаптация (Osmosy, MIT) — русское право + Hermes Agent + расширения:',
         '!протоколы разногласий вместо redline · kad.arbitr/pravo.gov.ru вместо CourtListener · ЕГРЮЛ/ФИПС вместо SEC/USPTO · 4-ступенчатый контракт для cron-агентов',
     ])
     footer(slide, th, 2)
@@ -484,7 +484,7 @@ def s_mcp(slide, th):
         ('atomno-mcp', ['13 серверов, Python, MIT', 'ЕГРЮЛ / ЕГРИП — через ФНС открытые данные', 'Контрагент одним вызовом — ЕФРСБ, Картотека, ФССП', 'sudact — судебная практика РФ'], 0.83, 3.15, 5.96, 1.95),
         ('Russian-Law-MCP', ['npm @ansvar/russian-law-mcp · Apache-2.0', '12 369 федеральных законов · 77 647 положений', '«КонсультантПлюс, но для AI»', 'Базовая правовая база для всех 12 доменов'], 6.88, 3.15, 5.62, 1.95),
         ('ГАРАНТ MCP (официальный API)', ['Подключение через токен Гарант-Коннект', 'Полные редакции · судебная практика (Сутяжник)', 'Мониторинг изменений — currency trigger по-русски'], 0.83, 5.32, 5.96, 1.55),
-        ('Резервный режим: web_search + [verify]', ['Без MCP все цитаты — [модель знания — проверь]', 'или прямая проверка против pravo.gov.ru / ФИПС / ЕГРЮЛ'], 6.88, 5.32, 5.62, 1.55),
+        ('Резервный режим: web_search + [verify]', ['Без MCP все цитаты — [model knowledge — verify]', 'или прямая проверка против pravo.gov.ru / ФИПС / ЕГРЮЛ'], 6.88, 5.32, 5.62, 1.55),
     ]
     for h, l, x, y, w, hh in cards:
         card(slide, th, x, y, w, hh, h, l, body_size=11)
@@ -558,13 +558,13 @@ def s_final(slide, th):
     add_text(slide, 2.67, 1.35, 8.0, 1.0, 'Vector Legal', size=52, bold=True,
              font=th['f_title'], color=th['accent'], align=PP_ALIGN.CENTER)
     add_text(slide, 2.67, 2.50, 8.0, 0.35,
-             '12 плагинов · 167 навыков · адаптация claude-for-legal под право РФ',
+             '12 плагинов · 168 навыков · адаптация claude-for-legal под право РФ',
              size=14, font=th['f_body'], color=th['text'], align=PP_ALIGN.CENTER)
     add_rect(slide, 4.17, 3.05, 5.0, 0.035, fill=th['accent'])
     add_text(slide, 4.17, 3.55, 5.0, 0.32, 'github.com/Osmosy/vector-legal', size=14.5,
              bold=True, font=th['f_mono'], color=th['text'], align=PP_ALIGN.CENTER)
     add_text(slide, 2.67, 4.25, 8.0, 0.28,
-             'Apache-2.0 · структурная база: anthropics/claude-for-legal (Anthropic)',
+             'MIT · структурная база: anthropics/claude-for-legal (Anthropic, Apache-2.0)',
              size=11.5, font=th['f_body'], color=th['muted'], align=PP_ALIGN.CENTER)
     add_text(slide, 2.67, 4.58, 8.0, 0.28, 'адаптация под закон России: Osmosy',
              size=11.5, font=th['f_body'], color=th['muted'], align=PP_ALIGN.CENTER)
