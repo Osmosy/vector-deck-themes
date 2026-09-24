@@ -84,6 +84,11 @@ SLIDES = [sl_title, sl_intro, sl_arch, sl_final]
 
 Готовые типы слайдов и чек-лист переработки — см. комментарии в `deck-music.py`.
 
+Колонтитулы «N / M · бренд» `deck_builder.py` выставляет сам: M — число функций
+в `SLIDES`, бренд — `DATA['footer_brand']`, а без него
+`«<DATA['title']> · Hermes Agent · Osmosy»`. Движок берётся из `engine.py` рядом
+с билдером (другой путь — `VECTOR_DECK_ENGINE=<файл>`).
+
 ## Правила (проверено на инцидентах)
 
 1. **Переработка ПОЛНАЯ** — сохраняется только тема. Hero-арт, эмблема, kicker,
@@ -97,6 +102,9 @@ SLIDES = [sl_title, sl_intro, sl_arch, sl_final]
 4. **Арифметика свеса**: n*card_w + (n-1)*gap + 2*margin ≤ 13.333
 5. **Z-order фонов**: арт вставлять сразу после bg-прямоугольников
    (`spTree.insert(3, el)`), не в конец.
+6. **Колонтитулы — от деки, не от движка**: `footer()` без `set_footer()` даёт
+   «/ 12 · Vector Legal». Собирать чужие деки только через `deck_builder.py`
+   (иначе «9 / 12» при 13 слайдах и чужой бренд — случай vector-prediction).
 
 ## Ассеты
 

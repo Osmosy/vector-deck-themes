@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Универсальный дек-билдер: контент в DATA, дизайн — темы из engine.py.
 Использование: ~/.venvs/pptx/bin/python deck_builder.py <deck.py> [тема]
-Пример: deck_builder.py deck-vector-music.py 07-corporate-navy"""
+Пример: deck_builder.py deck-vector-music.py 07-corporate-navy
+
+Колонтитулы «N / M · бренд»: M = len(SLIDES) деки, бренд — DATA['footer_brand'],
+иначе «<DATA['title']> · Hermes Agent · Osmosy».
+Движок — engine.py рядом с билдером; другой путь: VECTOR_DECK_ENGINE=<файл>."""
 import sys, os, importlib.util
 
-ENGINE = os.path.expanduser('~/projects/vector-legal-decks15/engine.py')
+ENGINE = os.environ.get('VECTOR_DECK_ENGINE',
+                        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'engine.py'))
 spec = importlib.util.spec_from_file_location('engine', ENGINE)
 eng = importlib.util.module_from_spec(spec)
 sys.modules['engine'] = eng
@@ -18,6 +23,8 @@ def build(deck_path, theme_name=None):
     d.loader.exec_module(deck)
     themes = [t for t in eng.THEMES if not theme_name or t['name'] in theme_name]
     assert themes, f'тема {theme_name} не найдена'
+    brand = deck.DATA.get('footer_brand') or f"{deck.DATA['title']} · Hermes Agent · Osmosy"
+    eng.set_footer(len(deck.SLIDES), brand)
     outs = []
     for th in themes:
         prs = eng.Presentation()

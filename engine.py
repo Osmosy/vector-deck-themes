@@ -167,10 +167,21 @@ def title_block(slide, theme, text, y=0.88, size=37, x=0.62, w=12.1,
         if al == PP_ALIGN.CENTER: ux = (13.333 - uw) / 2
         add_rect(slide, ux, y + 0.72, uw, 0.045, fill=theme['accent'])
 
-def footer(slide, theme, idx):
+# Колонтитул «N / M · бренд». По умолчанию — своя дека Vector Legal; чужая дека
+# (deck_builder) обязана выставить своё: иначе в неё уезжают «/ 12» и
+# «Vector Legal» (так случилось с vector-prediction: 13 слайдов, «9 / 12»).
+FOOTER = {'total': 12, 'brand': 'Vector Legal · Hermes Agent · Osmosy'}
+
+def set_footer(total, brand):
+    """Число слайдов и бренд для колонтитулов следующей собираемой деки."""
+    FOOTER['total'], FOOTER['brand'] = int(total), str(brand)
+
+def footer(slide, theme, idx, total=None, brand=None):
     c = theme['muted']
-    add_text(slide, 0.62, 7.14, 1.2, 0.25, f'{idx} / 12', size=9.5, font=theme['f_mono'], color=c)
-    add_text(slide, 9.6, 7.14, 3.1, 0.25, 'Vector Legal · Hermes Agent · Osmosy',
+    total = total or FOOTER['total']
+    add_text(slide, 0.62, 7.14, 1.2, 0.25, f'{idx} / {total}', size=9.5, font=theme['f_mono'], color=c)
+    # правый край тот же (12.7"), бокс шире — длинный бренд не переносится
+    add_text(slide, 8.2, 7.14, 4.5, 0.25, brand or FOOTER['brand'],
              size=9.5, font=theme['f_mono'], color=c, align=PP_ALIGN.RIGHT)
 
 def bg_fill(slide, theme, decor=True):
@@ -570,6 +581,7 @@ BUILDERS = [s_title, s_intro, s_workflow, s_domains1, s_domains2, s_architecture
             s_agents, s_mcp, s_connectors, s_guide, s_roadmap, s_final]
 
 def build_theme(th):
+    set_footer(len(BUILDERS), 'Vector Legal · Hermes Agent · Osmosy')
     prs = Presentation()
     prs.slide_width, prs.slide_height = SW, SH
     blank = prs.slide_layouts[6]
