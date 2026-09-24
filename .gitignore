@@ -1,5 +1,5 @@
 __pycache__/
 review.html
-render/
+# render/ не игнорируем: рендеры тем — часть репо (см. README)
 vector-music-navy-*.png
 *.pyc

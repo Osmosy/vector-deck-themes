@@ -1,0 +1,30 @@
+name: smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: Сборка всех тем и колонтитулы
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Зависимости
+        run: pip install python-pptx Pillow numpy
+
+      - name: Синтаксис
+        run: python -m compileall -q engine.py deck_builder.py deck-music.py build_review.py tests
+
+      - name: Скрипт рендера
+        run: bash -n render_all.sh
+
+      # Hero-арты подменяются заглушками внутри теста
+      - name: Дымовая сборка
+        run: python tests/smoke_build.py

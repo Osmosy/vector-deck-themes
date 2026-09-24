@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build HTML review page for 15 deck variants."""
 import glob, os, base64
-OUTDIR = os.path.expanduser('~/projects/vector-legal-decks15')
+OUTDIR = os.path.expanduser(
+    os.environ.get('VECTOR_DECK_OUTDIR', '~/projects/vector-legal-decks15'))
 RENDER = f'{OUTDIR}/render'
 themes = sorted(os.path.basename(p) for p in glob.glob(f'{RENDER}/vector-legal-*'))
 

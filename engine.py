@@ -9,9 +9,11 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
 from PIL import Image
 
-ASSETS = '/tmp/vl_assets'
-OUTDIR = os.path.expanduser('~/projects/vector-legal-decks15')
-os.makedirs(OUTDIR, exist_ok=True)
+# Hero-арты и эмблемы живут вне репо (см. README «Ассеты»); выход — вне репо.
+# Оба пути переопределяются окружением: так их подменяют CI и чужие деки.
+ASSETS = os.environ.get('VECTOR_DECK_ASSETS', '/tmp/vl_assets')
+OUTDIR = os.path.expanduser(
+    os.environ.get('VECTOR_DECK_OUTDIR', '~/projects/vector-legal-decks15'))
 
 SW, SH = Inches(13.333), Inches(7.5)
 A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main'
@@ -201,7 +203,7 @@ def _shift(hexcol, amt):
 def tint_emblem(theme):
     """Recolor transparent emblem to theme accent; returns cached path."""
     src, hexc = theme['emblem']
-    out = f'/tmp/vl_assets/emblem_{theme["name"]}.png'
+    out = f'{ASSETS}/emblem_{theme["name"]}.png'
     if os.path.exists(out): return out
     im = Image.open(f'{ASSETS}/{src}').convert('RGBA')
     a = im.getchannel('A')
@@ -588,6 +590,7 @@ def build_theme(th):
     for builder in BUILDERS:
         slide = prs.slides.add_slide(blank)
         builder(slide, th)
+    os.makedirs(OUTDIR, exist_ok=True)
     out = f'{OUTDIR}/vector-legal-{th["name"]}.pptx'
     prs.save(out)
     return out

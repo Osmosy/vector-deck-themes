@@ -5,7 +5,8 @@
 
 Колонтитулы «N / M · бренд»: M = len(SLIDES) деки, бренд — DATA['footer_brand'],
 иначе «<DATA['title']> · Hermes Agent · Osmosy».
-Движок — engine.py рядом с билдером; другой путь: VECTOR_DECK_ENGINE=<файл>."""
+Движок — engine.py рядом с билдером; другой путь: VECTOR_DECK_ENGINE=<файл>.
+VECTOR_DECK_OUTDIR=<каталог> — положить деку туда (имя файла — из OUT_FMT)."""
 import sys, os, importlib.util
 
 ENGINE = os.environ.get('VECTOR_DECK_ENGINE',
@@ -33,6 +34,10 @@ def build(deck_path, theme_name=None):
         for fn in deck.SLIDES:          # список функций-слайдов из deck-файла
             fn(prs.slides.add_slide(blank), th, deck.DATA)
         out = deck.OUT_FMT.format(theme=th['name'])
+        if os.environ.get('VECTOR_DECK_OUTDIR'):
+            out = os.path.join(os.path.expanduser(os.environ['VECTOR_DECK_OUTDIR']),
+                               os.path.basename(out))
+        os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
         prs.save(out)
         outs.append(out)
     return outs
