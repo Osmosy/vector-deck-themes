@@ -1,15 +1,26 @@
 #!/bin/bash
-# Render all 15 decks + build contact sheets
+# Render all theme decks + build contact sheets.
+# Рендер: LibreOffice (soffice) → PDF → pdftoppm → render/<deck>/slide-NN.png.
+# VECTOR_DECK_OUTDIR — каталог дек (как у engine.py), PY — python с Pillow.
 set -e
-OUTDIR=~/projects/vector-legal-decks15
+OUTDIR=${VECTOR_DECK_OUTDIR:-~/projects/vector-legal-decks15}
+OUTDIR=${OUTDIR/#\~/$HOME}
+export VECTOR_DECK_OUTDIR=$OUTDIR
 RENDER=$OUTDIR/render
 mkdir -p "$RENDER"
-PY=~/.venvs/pptx/bin/python
+PY=${PY:-~/.venvs/pptx/bin/python}
+command -v soffice >/dev/null || { echo "нужен LibreOffice (soffice)"; exit 1; }
+command -v pdftoppm >/dev/null || { echo "нужен pdftoppm (poppler-utils)"; exit 1; }
 
+PDFTMP=$(mktemp -d)
+trap 'rm -rf "$PDFTMP"' EXIT
 for f in "$OUTDIR"/vector-legal-*.pptx; do
   name=$(basename "$f" .pptx)
   if [ ! -d "$RENDER/$name" ]; then
-    $PY /home/lenovo/.hermes/skills/productivity/powerpoint/scripts/pptx_render.py "$f" --outdir "$RENDER/$name" >/dev/null 2>&1 && echo "rendered $name"
+    soffice --headless --convert-to pdf --outdir "$PDFTMP" "$f" >/dev/null 2>&1
+    mkdir -p "$RENDER/$name"
+    pdftoppm -png -scale-to 1920 "$PDFTMP/$name.pdf" "$RENDER/$name/slide"
+    echo "rendered $name"
   fi
 done
 
@@ -17,7 +28,7 @@ done
 $PY - <<'EOF'
 from PIL import Image
 import glob, os
-OUTDIR = os.path.expanduser('~/projects/vector-legal-decks15')
+OUTDIR = os.environ['VECTOR_DECK_OUTDIR']
 RENDER = f'{OUTDIR}/render'
 themes = sorted(os.path.basename(p) for p in glob.glob(f'{RENDER}/vector-legal-*'))
 TH_W, TH_H = 480, 270  # thumb size

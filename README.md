@@ -33,6 +33,9 @@ kicker и подписи генерируются заново под тему �
 | 14 | forest-institute | тёмная | изумруд + латунь | институтский/научный |
 | 15 | typographic-bw | светлая | ч/б + один синий | минимализм |
 
+`00-v2-original` — эталонная дека, с которой снимались темы: в `engine.py` её нет
+(там 15 тем, 01–15), в репо лежит только готовый `vector-legal-00-v2-original.pptx`.
+
 Полные рендеры каждой темы — в `render/<theme>/slide-01..12.png`.
 
 ## Структура
@@ -46,6 +49,7 @@ build_review.py    HTML-ревью (review.html)
 render/            PNG-рендеры: 15 тем × 12 слайдов
 vector-legal-*.pptx   15 дек Vector Legal (базовый контент)
 vector-music-*.pptx   тест универсальности (Vector Music)
+tests/smoke_build.py  сборка всех тем с заглушками ассетов + проверка колонтитулов
 ```
 
 ## Быстрый старт
@@ -61,10 +65,22 @@ cd vector-deck-themes
 
 # рендер + контактные листы
 bash render_all.sh
+
+# дымовая проверка (то же гоняет CI): все темы + deck-music, колонтитулы
+python tests/smoke_build.py
 ```
 
 Зависимости: Python 3.11+, `pip install python-pptx Pillow numpy`,
-рендер — LibreOffice (`soffice`) + `pdftoppm`.
+рендер — LibreOffice (`soffice`) + `pdftoppm` (пакет `poppler-utils`).
+
+Пути — через окружение (по умолчанию как раньше):
+
+| Переменная | По умолчанию | Что |
+|---|---|---|
+| `VECTOR_DECK_ASSETS` | `/tmp/vl_assets` | hero-арты и эмблемы (вне репо) |
+| `VECTOR_DECK_OUTDIR` | `~/projects/vector-legal-decks15` | куда пишутся деки и рендеры |
+| `VECTOR_DECK_ENGINE` | `engine.py` рядом с билдером | движок для `deck_builder.py` |
+| `PY` | `~/.venvs/pptx/bin/python` | python для `render_all.sh` |
 
 ## Дека на новую тему (универсальный движок)
 
