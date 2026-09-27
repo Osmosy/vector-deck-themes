@@ -2,4 +2,7 @@ __pycache__/
 review.html
 # render/ не игнорируем: рендеры тем — часть репо (см. README)
 vector-music-navy-*.png
+# Дека чужого репо: build.py пишет её сюда, но хранится она в своём репозитории
+# (vector-marketing/deck/) — в этом репо трекаем только свои vector-legal-*/music.
+vector-marketing-*.pptx
 *.pyc
