@@ -31,8 +31,14 @@ def placeholder_assets(target: Path) -> None:
     names = set()
     for src in ("engine.py", "deck-music.py"):
         names |= set(re.findall(r"['\"]([A-Za-z0-9_\-]+\.png)['\"]", (ROOT / src).read_text(encoding="utf-8")))
+    # Имена из f-строк вида f'{ASSETS}/vector_ray_t.png' — отдельный проход.
+    for src in ("engine.py", "deck-music.py"):
+        names |= set(re.findall(r"\}/([A-Za-z0-9_\-]+\.png)", (ROOT / src).read_text(encoding="utf-8")))
     for name in names:
-        Image.new("RGBA", (640, 360), (40, 60, 90, 255)).save(target / name)
+        # Логотип Vector Ray — в реальном размере 1300×920: тест `check_logo`
+        # проверяет его наличие по габаритам, заглушка 640×360 его не заменит.
+        size = (1300, 920) if name == "vector_ray_t.png" else (640, 360)
+        Image.new("RGBA", size, (40, 60, 90, 255)).save(target / name)
 
 
 def slide_texts(pptx: Path) -> list[list[str]]:
@@ -124,6 +130,39 @@ def check_credit_contrast(eng, pptx: Path | None = None, theme: dict | None = No
     return errors
 
 
+def slide_logo_pictures(pptx: Path, min_side: int = 900) -> list[tuple[int, int]]:
+    """Крупные картинки на титуле — для проверки логотипа Vector Ray.
+
+    Дефект (27.09.2026): при пересборке музыкальных дек из `deck-music.py`
+    логотип Vector Ray (1300×920) пропал с титула — он был только в старых
+    pptx, а исходник его не рисовал. Файлы упали с 1.35 МБ до 0.14 МБ.
+    Порог 900: у логотипа меньшая сторона 920, у hero-арта 1152 — оба видны,
+    а мелкие элементы (эмблема 1″ ≈ 300 px) не попадают.
+    """
+    from pptx import Presentation
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+
+    out: list[tuple[int, int]] = []
+    prs = Presentation(str(pptx))
+    slide = prs.slides[0]
+    for sh in slide.shapes:
+        if sh.shape_type != MSO_SHAPE_TYPE.PICTURE:
+            continue
+        w, h = sh.image.size
+        if min(w, h) >= min_side:
+            out.append((w, h))
+    return out
+
+
+def check_logo(pptx: Path) -> list[str]:
+    """На титуле деки есть логотип Vector Ray (1300×920)."""
+    pics = slide_logo_pictures(pptx)
+    if not any((w, h) == (1300, 920) for w, h in pics):
+        return [f"{pptx.name}: на титуле нет логотипа Vector Ray (1300×920); "
+                f"картинки: {pics or 'нет'}"]
+    return []
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         assets, out = Path(tmp, "assets"), Path(tmp, "out")
@@ -153,6 +192,7 @@ def main() -> int:
             if Path(p).parent != out:
                 errors.append(f"{p}: VECTOR_DECK_OUTDIR не учтён")
             errors += check_footers(p, "Vector Music · Hermes Agent · Osmosy")
+            errors += check_logo(p)
             if any("Vector Legal" in t for s in slide_texts(p) for t in s):
                 errors.append(f"{p.name}: в чужой деке текст «Vector Legal»")
 
