@@ -187,6 +187,7 @@ def main() -> int:
                 errors.append(f"{p.name}: слайдов {len(slide_texts(p))}, ждали {len(eng.BUILDERS)}")
             errors += check_footers(p, "Vector Legal · Hermes Agent · Osmosy")
             errors += check_credit_contrast(eng, p, th)
+            errors += check_logo(p)
 
         for p in map(Path, deck_builder.build(str(ROOT / "deck-music.py"))):
             if Path(p).parent != out:
