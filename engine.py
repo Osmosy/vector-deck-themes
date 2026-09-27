@@ -429,6 +429,15 @@ def s_title(slide, th):
                  bold=True, font=th['f_mono'], color=th['accent'])
         credit_line(slide, th, 0.92, 5.55, 6.0)
         signature_line(slide, th, 0.92, 5.90, 6.0)
+    # Логотип Vector Ray на титуле — правило №2 README («обязателен на
+    # титульном слайде, ПОСЛЕ отрисовки арта»). Задача D2 (27.09.2026):
+    # движок его не рисовал, 15 дек vector-legal шли без логотипа, хотя
+    # правило объявляло его обязательным. Позиция адаптивная: если справа
+    # сверху уже стоит half-арт — лого слева, иначе справа (в center-
+    # композиции эмблема по центру, лого справа).
+    logo_x = 0.55 if (th['art'] and th['art'][0] == 'half') else 12.20
+    slide.shapes.add_picture(f'{ASSETS}/vector_ray_t.png',
+                             Inches(logo_x), Inches(0.30), width=Inches(0.9))
 
 def s_intro(slide, th):
     bg_fill(slide, th)
