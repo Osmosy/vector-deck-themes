@@ -58,21 +58,69 @@ def check_footers(pptx: Path, brand: str) -> list[str]:
     return errors
 
 
-def check_credit_contrast(eng) -> list[str]:
-    """Строка атрибуции читается: контраст >= 4.5 (WCAG AA) на фоне темы.
+def slide_service_colors(pptx: Path) -> list[tuple[int, str, str]]:
+    """Цвета служебных строк в собранном PPTX: (слайд, текст, цвет).
+
+    Берём цвет из XML, а не из кода движка: проверка должна падать, если
+    `footer()`/`signature_line()` начнут писать muted, даже когда сам
+    `service_color()` остался правильным (мутация «вернуть muted» ловилась
+    только чтением собранного файла).
+    """
+    out: list[tuple[int, str, str]] = []
+    with zipfile.ZipFile(pptx) as z:
+        slides = sorted(
+            (int(m.group(1)), n) for n in z.namelist()
+            if (m := re.match(r"ppt/slides/slide(\d+)\.xml$", n))
+        )
+        for num, name in slides:
+            xml = z.read(name).decode("utf-8")
+            for para in re.findall(r"<a:p>.*?</a:p>", xml, re.S):
+                texts = re.findall(r"<a:t>([^<]*)</a:t>", para)
+                if not texts:
+                    continue
+                text = "".join(texts)
+                if not (re.fullmatch(r"\d+ / \d+", text) or "Osmosy · Hermes Agent" in text):
+                    continue
+                m = re.search(r'<a:solidFill><a:srgbClr val="([0-9A-Fa-f]{6})"', para)
+                if m:
+                    out.append((num, text, m.group(1).upper()))
+    return out
+
+
+def check_credit_contrast(eng, pptx: Path | None = None, theme: dict | None = None) -> list[str]:
+    """Служебные строки читаются: контраст >= 4.5 (WCAG AA) на фоне темы.
 
     Дефект (27.09.2026): на пяти тёмных темах с full-артом строка лежала на
     арте цветом muted — контраст 1.14–1.42, почти не читалась. Цвет выбирает
     движок (eng.credit_color), подложка возвращает фон темы, поэтому контраст
     считается от bg — это нижняя граница того, что видит читатель.
+
+    Задача C1: тем же цветом muted рисовались колонтитул (footer) и подпись
+    «Osmosy · Hermes Agent · 2026» — на светлых темах 06/11/12 контраст 3.52/
+    4.00/4.19 при норме 4.5. Если переданы `pptx` и `theme`, цвета служебных
+    строк берутся из собранного слайда (тогда мутация «вернуть muted в
+    footer()» падает), иначе — по коду движка.
     """
+    def hx(s):
+        return tuple(int(s[i:i+2], 16) for i in (0, 2, 4))
+
     errors = []
     for th in eng.THEMES:
-        def hx(s):
-            return tuple(int(s[i:i+2], 16) for i in (0, 2, 4))
         c = eng._contrast(hx(eng.credit_color(th)), hx(th['bg']))
         if c < 4.5:
             errors.append(f"тема {th['name']}: строка атрибуции — контраст {c:.2f} < 4.5")
+        sc = eng._contrast(hx(eng.service_color(th)), hx(th['bg']))
+        if sc < 4.5:
+            errors.append(f"тема {th['name']}: служебные строки — контраст {sc:.2f} < 4.5")
+
+    if pptx is not None and theme is not None:
+        for num, text, color in slide_service_colors(pptx):
+            c = eng._contrast(hx(color), hx(theme['bg']))
+            if c < 4.5:
+                errors.append(
+                    f"{pptx.name} слайд {num}: служебная строка «{text}» цвет {color} "
+                    f"— контраст {c:.2f} < 4.5 (тема {theme['name']})"
+                )
     return errors
 
 
@@ -99,6 +147,7 @@ def main() -> int:
             if len(slide_texts(p)) != len(eng.BUILDERS):
                 errors.append(f"{p.name}: слайдов {len(slide_texts(p))}, ждали {len(eng.BUILDERS)}")
             errors += check_footers(p, "Vector Legal · Hermes Agent · Osmosy")
+            errors += check_credit_contrast(eng, p, th)
 
         for p in map(Path, deck_builder.build(str(ROOT / "deck-music.py"))):
             if Path(p).parent != out:

@@ -179,7 +179,9 @@ def set_footer(total, brand):
     FOOTER['total'], FOOTER['brand'] = int(total), str(brand)
 
 def footer(slide, theme, idx, total=None, brand=None):
-    c = theme['muted']
+    # color=service_color, а не theme['muted']: на светлых темах muted не
+    # дотягивал до нормы (06 3.52, 11 4.00, 12 4.19 при 4.5) — задача C1.
+    c = service_color(theme)
     total = total or FOOTER['total']
     add_text(slide, 0.62, 7.14, 1.2, 0.25, f'{idx} / {total}', size=9.5, font=theme['f_mono'], color=c)
     # правый край тот же (12.7"), бокс шире — длинный бренд не переносится
@@ -320,13 +322,38 @@ def wide_panel(slide, theme, x, y, w, h, head, lines, head_color=None):
 
 # ---------------------------------------------------------------- slides
 def credit_color(th):
-    """Читаемый цвет строки атрибуции для темы (>= 4.5 на фоне темы)."""
+    """Читаемый цвет служебного текста для темы (>= 4.5 на фоне темы)."""
     bg = _rgb(th['bg'])
     if _contrast(_rgb(th['muted']), bg) >= 4.5:
         return th['muted']
     if th['mode'] == 'light':
         return _darken_to_aa(th['muted'], th['bg'])
     return th['text']
+
+
+# Служебный текст: колонтитул, строка подписи на титуле и финале.
+# Задача C1 (27.09.2026): читаемой была только строка атрибуции, а тем же
+# цветом muted рисовались колонтитулы (на светлых темах 06/11/12 — 3.52/4.00/
+# 4.19 при норме 4.5) и подпись «Osmosy · Hermes Agent · 2026», которая на
+# full-арт темах лежала прямо на картинке. Общий цвет — credit_color.
+def service_color(th):
+    """Читаемый цвет служебных строк темы (колонтитул, подпись)."""
+    return credit_color(th)
+
+
+def _plate(slide, th, x, y, w, h=0.42):
+    """Подложка цвета фона под служебной строкой поверх арта.
+
+    Тот же приём, что у строки атрибуции: плашка возвращает фон темы, поэтому
+    контраст считается от bg, а не от картинки. Вставляем третьим элементом
+    spTree — над full-артом и оверлеем, иначе плашка уходит под них и строка
+    снова читается по арту.
+    """
+    pad_x, pad_y = 0.22, 0.07
+    plate = add_rect(slide, x - pad_x, y - pad_y, w + 2 * pad_x, h,
+                     fill=th['bg'], radius=h / 2, alpha=97)
+    spTree = slide.shapes._spTree
+    spTree.remove(plate._element); spTree.insert(3, plate._element)
 
 
 def credit_line(slide, th, x, y, w, align=PP_ALIGN.LEFT):
@@ -338,17 +365,22 @@ def credit_line(slide, th, x, y, w, align=PP_ALIGN.LEFT):
     считается от bg, а не от арта; где и на bg мало (light-темы с бледным muted),
     цвет дотягивается затемнением до AA (см. credit_color).
     """
-    color = credit_color(th)
-    overlay = th['art'] and th['art'][0] == 'full'
-    if overlay:
-        pad_x, pad_y = 0.22, 0.07
-        plate = add_rect(slide, x - pad_x, y - pad_y, w + 2 * pad_x, 0.42,
-                         fill=th['bg'], radius=0.21, alpha=97)
-        spTree = slide.shapes._spTree
-        spTree.remove(plate._element); spTree.insert(3, plate._element)
+    if th['art'] and th['art'][0] == 'full':
+        _plate(slide, th, x, y, w)
     return add_text(slide, x, y, w, 0.28,
                     'Адаптация anthropics/claude-for-legal (Apache-2.0) · код — MIT',
-                    size=10.5, font=th['f_body'], color=color, align=align)
+                    size=10.5, font=th['f_body'], color=service_color(th), align=align)
+
+
+def signature_line(slide, th, x, y, w, align=PP_ALIGN.LEFT):
+    """Подпись «Osmosy · Hermes Agent · 2026» читаемым цветом.
+
+    На full-арт темах подпись лежит на картинке — под неё кладём плашку.
+    """
+    if th['art'] and th['art'][0] == 'full':
+        _plate(slide, th, x, y, w, h=0.40)
+    return add_text(slide, x, y, w, 0.26, 'Osmosy · Hermes Agent · 2026', size=9.5,
+                    font=th['f_mono'], color=service_color(th), align=align)
 
 
 def s_title(slide, th):
@@ -377,8 +409,7 @@ def s_title(slide, th):
                  bold=True, font=th['f_mono'],
                  color='FFFFFF' if th['mode'] == 'dark' else 'FFFFFF', align=PP_ALIGN.CENTER)
         credit_line(slide, th, 3.67, 6.55, 6.0, align=PP_ALIGN.CENTER)
-        add_text(slide, 4.87, 6.90, 3.6, 0.26, 'Osmosy · Hermes Agent · 2026', size=9.5,
-                 font=th['f_mono'], color=th['muted'], align=PP_ALIGN.CENTER)
+        signature_line(slide, th, 4.87, 6.90, 3.6, align=PP_ALIGN.CENTER)
     else:
         # left-aligned title (light editorial / half-art themes)
         add_rect(slide, 0.62, 1.30, 0.05, 2.2, fill=th['accent'])
@@ -397,8 +428,7 @@ def s_title(slide, th):
         add_text(slide, 0.92, 5.15, 6.0, 0.3, 'github.com/Osmosy/vector-legal', size=13,
                  bold=True, font=th['f_mono'], color=th['accent'])
         credit_line(slide, th, 0.92, 5.55, 6.0)
-        add_text(slide, 0.92, 5.90, 6.0, 0.26, 'Osmosy · Hermes Agent · 2026', size=9.5,
-                 font=th['f_mono'], color=th['muted'])
+        signature_line(slide, th, 0.92, 5.90, 6.0)
 
 def s_intro(slide, th):
     bg_fill(slide, th)
