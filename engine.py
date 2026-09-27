@@ -195,6 +195,39 @@ def bg_fill(slide, theme, decor=True):
     # top hairline accent
     add_rect(slide, 0, 0, 13.334, 0.05, fill=theme['accent'])
 
+def _lum(rgb):
+    """Относительная яркость по WCAG 2.1 (0..1)."""
+    def f(u):
+        u = u / 255
+        return u / 12.92 if u <= 0.03928 else ((u + 0.055) / 1.055) ** 2.4
+    return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2])
+
+
+def _contrast(a, b):
+    """Контраст двух цветов по WCAG 2.1 (1..21). Норма для мелкого текста — 4.5."""
+    la, lb = _lum(a), _lum(b)
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _darken_to_aa(fg_hex, bg_hex, target=4.5):
+    """Затемняет цвет текста до контраста target на данном фоне.
+
+    Нужно там, где muted темы сам по себе бледный: 06-paper-minimal (3.52),
+    11-sepia-legal (4.00), 12-arctic-frost (4.19) — на этих светлых темах
+    даже подложка не спасала, потому что проблема в цвете, а не в фоне.
+    """
+    fg = list(_rgb(fg_hex)); bg = _rgb(bg_hex)
+    if _contrast(fg, bg) >= target:
+        return fg_hex
+    for step in range(1, 101):
+        k = 1 - step / 100
+        cand = tuple(int(c * k) for c in fg)
+        if _lum(cand) <= _lum(bg) and _contrast(cand, bg) >= target:
+            return '%02X%02X%02X' % cand
+    return '000000'
+
+
 def _shift(hexcol, amt):
     r = int(hexcol[0:2], 16) + amt; g = int(hexcol[2:4], 16) + amt; b = int(hexcol[4:6], 16) + amt
     clamp = lambda v: max(0, min(255, v))
@@ -286,6 +319,38 @@ def wide_panel(slide, theme, x, y, w, h, head, lines, head_color=None):
         yy += 0.30
 
 # ---------------------------------------------------------------- slides
+def credit_color(th):
+    """Читаемый цвет строки атрибуции для темы (>= 4.5 на фоне темы)."""
+    bg = _rgb(th['bg'])
+    if _contrast(_rgb(th['muted']), bg) >= 4.5:
+        return th['muted']
+    if th['mode'] == 'light':
+        return _darken_to_aa(th['muted'], th['bg'])
+    return th['text']
+
+
+def credit_line(slide, th, x, y, w, align=PP_ALIGN.LEFT):
+    """Строка атрибуции поверх hero-арта: подложка + читаемый цвет.
+
+    Дефект (найден 27.09.2026): на пяти тёмных темах с full-артом строка лежала
+    прямо на картинке цветом muted — контраст 1.14–1.42 при норме 4.5 (WCAG AA),
+    текст почти не читался. Плашка возвращает фон темы, поэтому контраст
+    считается от bg, а не от арта; где и на bg мало (light-темы с бледным muted),
+    цвет дотягивается затемнением до AA (см. credit_color).
+    """
+    color = credit_color(th)
+    overlay = th['art'] and th['art'][0] == 'full'
+    if overlay:
+        pad_x, pad_y = 0.22, 0.07
+        plate = add_rect(slide, x - pad_x, y - pad_y, w + 2 * pad_x, 0.42,
+                         fill=th['bg'], radius=0.21, alpha=97)
+        spTree = slide.shapes._spTree
+        spTree.remove(plate._element); spTree.insert(3, plate._element)
+    return add_text(slide, x, y, w, 0.28,
+                    'Адаптация anthropics/claude-for-legal (Apache-2.0) · код — MIT',
+                    size=10.5, font=th['f_body'], color=color, align=align)
+
+
 def s_title(slide, th):
     full_art(slide, th, th['art'][1], overlay_pct=26) if th['art'] and th['art'][0] == 'full' else None
     if th['art'] and th['art'][0] == 'half':
@@ -311,8 +376,7 @@ def s_title(slide, th):
         add_text(slide, 4.87, 5.74, 3.6, 0.3, 'github.com/Osmosy/vector-legal', size=12.5,
                  bold=True, font=th['f_mono'],
                  color='FFFFFF' if th['mode'] == 'dark' else 'FFFFFF', align=PP_ALIGN.CENTER)
-        add_text(slide, 3.67, 6.55, 6.0, 0.28, 'Адаптация anthropics/claude-for-legal (Apache-2.0) · код — MIT',
-                 size=10.5, font=th['f_body'], color=th['muted'], align=PP_ALIGN.CENTER)
+        credit_line(slide, th, 3.67, 6.55, 6.0, align=PP_ALIGN.CENTER)
         add_text(slide, 4.87, 6.90, 3.6, 0.26, 'Osmosy · Hermes Agent · 2026', size=9.5,
                  font=th['f_mono'], color=th['muted'], align=PP_ALIGN.CENTER)
     else:
@@ -332,8 +396,7 @@ def s_title(slide, th):
                      color=th['muted'], spacing=100)
         add_text(slide, 0.92, 5.15, 6.0, 0.3, 'github.com/Osmosy/vector-legal', size=13,
                  bold=True, font=th['f_mono'], color=th['accent'])
-        add_text(slide, 0.92, 5.55, 6.0, 0.28, 'Адаптация anthropics/claude-for-legal (Apache-2.0) · код — MIT',
-                 size=10.5, font=th['f_body'], color=th['muted'])
+        credit_line(slide, th, 0.92, 5.55, 6.0)
         add_text(slide, 0.92, 5.90, 6.0, 0.26, 'Osmosy · Hermes Agent · 2026', size=9.5,
                  font=th['f_mono'], color=th['muted'])
 

@@ -58,6 +58,24 @@ def check_footers(pptx: Path, brand: str) -> list[str]:
     return errors
 
 
+def check_credit_contrast(eng) -> list[str]:
+    """Строка атрибуции читается: контраст >= 4.5 (WCAG AA) на фоне темы.
+
+    Дефект (27.09.2026): на пяти тёмных темах с full-артом строка лежала на
+    арте цветом muted — контраст 1.14–1.42, почти не читалась. Цвет выбирает
+    движок (eng.credit_color), подложка возвращает фон темы, поэтому контраст
+    считается от bg — это нижняя граница того, что видит читатель.
+    """
+    errors = []
+    for th in eng.THEMES:
+        def hx(s):
+            return tuple(int(s[i:i+2], 16) for i in (0, 2, 4))
+        c = eng._contrast(hx(eng.credit_color(th)), hx(th['bg']))
+        if c < 4.5:
+            errors.append(f"тема {th['name']}: строка атрибуции — контраст {c:.2f} < 4.5")
+    return errors
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         assets, out = Path(tmp, "assets"), Path(tmp, "out")
@@ -71,6 +89,7 @@ def main() -> int:
         eng = deck_builder.eng
 
         errors: list[str] = []
+        errors += check_credit_contrast(eng)
         for th in eng.THEMES:
             try:
                 p = Path(eng.build_theme(th))
