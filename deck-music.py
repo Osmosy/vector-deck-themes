@@ -31,6 +31,7 @@ DATA = dict(
 )
 
 from engine import kicker, title_block, footer, bg_fill, card, chip, wide_panel, add_text, add_rect
+from engine import ASSETS, signature_line  # VECTOR_DECK_ASSETS + читаемая подпись
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
 
@@ -59,8 +60,9 @@ def sl_title(slide, th, D):
         add_rect(slide, 4.87, 5.62, 3.6, 0.52, fill=th['accent'], radius=0.26)
         add_text(slide, 4.87, 5.74, 3.6, 0.3, D['github'], size=12.5, bold=True,
                  font=th['f_mono'], color='FFFFFF', align=PP_ALIGN.CENTER)
-        add_text(slide, 4.87, 6.90, 3.6, 0.26, D['footer_tag'], size=9.5,
-                 font=th['f_mono'], color=th['muted'], align=PP_ALIGN.CENTER)
+        # Читаемый цвет + подложка на full-арт темах (задача D1, попутно к C1):
+        # при color=th['muted'] подпись ложилась на hero-арт и не читалась.
+        signature_line(slide, th, 4.87, 6.90, 3.6, align=PP_ALIGN.CENTER)
     else:
         add_rect(slide, 0.62, 1.30, 0.05, 2.2, fill=th['accent'])
         add_text(slide, 0.92, 1.30, 6.5, 0.3, D['kicker'], size=11, bold=True,
@@ -77,8 +79,16 @@ def sl_title(slide, th, D):
                      color=th['muted'], spacing=100)
         add_text(slide, 0.92, 5.15, 6.0, 0.3, D['github'], size=13, bold=True,
                  font=th['f_mono'], color=th['accent'])
-        add_text(slide, 0.92, 6.0, 6.0, 0.26, D['footer_tag'], size=9.5,
-                 font=th['f_mono'], color=th['muted'])
+        signature_line(slide, th, 0.92, 6.0, 6.0)
+    # Логотип Vector Ray на титуле — обязателен по правилу №2 README движка.
+    # Регрессия (найдена 27.09.2026): при пересборке музыкальных дек из этого
+    # файла логотип пропал — он был только в старых pptx, а deck-music.py его
+    # не рисовал. Отсюда падение размера файлов с 1.35 МБ до 0.14 МБ.
+    # Справа сверху; вызывается ПОСЛЕ арта и текста — иначе hero-арт накроет
+    # (z-order: что добавлено позже, то сверху). Вне if/else: нужен обеим
+    # компоновкам титула (центрированной и левой).
+    slide.shapes.add_picture(f'{ASSETS}/vector_ray_t.png',
+                             Inches(12.20), Inches(0.30), width=Inches(0.9))
 
 
 def sl_intro(slide, th, D):
